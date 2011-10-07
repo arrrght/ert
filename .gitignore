@@ -1,3 +1,6 @@
 *.swp
-public/*.js
+public/app/model/*.js
+public/app/store/*.js
+public/app/controller/*.js
+public/app/view/*.js
 .DS_Store
