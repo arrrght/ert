@@ -16,16 +16,40 @@
               width: 350,
               xtype: 'orgList'
             }, {
-              xtype: 'panel',
-              dockedItems: {
-                xtype: 'toolbar',
-                dock: 'bottom',
-                items: {
-                  text: 'Телефонный звонок'
-                }
+              flex: 1,
+              layout: {
+                type: 'vbox',
+                align: 'stretch'
               },
-              html: 'right<b>bold</b>',
-              flex: 1
+              items: [
+                {
+                  flex: 1,
+                  xtype: 'panel',
+                  id: 'txt',
+                  html: 'right<b>bold</b>',
+                  flex: 1
+                }, {
+                  xtype: 'splitter'
+                }, {
+                  id: 'ASD',
+                  height: 150,
+                  layout: {
+                    type: 'fit'
+                  },
+                  items: {
+                    xtype: 'textarea'
+                  },
+                  dockedItems: {
+                    xtype: 'toolbar',
+                    dock: 'bottom',
+                    items: {
+                      id: 'btnOk',
+                      action: 'phoneCall',
+                      text: 'Телефонный звонок'
+                    }
+                  }
+                }
+              ]
             }
           ]
         }

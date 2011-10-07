@@ -1,16 +1,35 @@
-D = ''
 Ext.define 'App.controller.BaseCtrl',
   extend: 'Ext.app.Controller'
 
   stores: [ 'Orgs' ]
   models: [ 'Org' ]
 
+  refs:
+    ref: 'orgList', selector: 'orgList'
+
   init: ->
     console.log 'controller.BaseCtrl init'
     this.control
 
-      'orgList button[action=orgNew2]':
-        click: -> Org.new('asdadsad')
+      'orgList':
+        selectionchange: (view, records) ->
+          rec = records.shift()
+          txtPanel = Ext.getCmp 'txt'
+          Org.getText {id: rec.data._id}, (ans) ->
+            if ans.success
+              txtPanel.update ans.doc
+            else
+              txtPanel.update "ERROR: #{ans.message}"
+
+      'button[action=phoneCall]':
+        click: (btn) ->
+          txt = btn.up().up().down('textareafield').value
+          id = @getOrgList().getSelectionModel().getSelection()?[0]?.data?._id
+          if txt and id
+            Org.setText { id: id, txt: txt }, (ans) ->
+              txtPanel = Ext.getCmp 'txt'
+              txtPanel.update ans
+              
 
       'orgList button[action=orgNew]':
         click: (btn) ->

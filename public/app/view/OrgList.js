@@ -13,10 +13,6 @@
         xtype: 'button',
         action: 'orgNew',
         text: 'New'
-      }, {
-        xtype: 'button',
-        action: 'orgNew2',
-        text: 'New2'
       }
     ],
     initComponent: function() {

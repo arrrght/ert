@@ -1,1 +1,0 @@
-console.log 'PLEASE NOT IN CONSOLE, FUCKED BITCH !!!!11111'
