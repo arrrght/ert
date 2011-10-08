@@ -32,12 +32,12 @@ require('zappa') ->
     Ext.Direct.addProvider Ext.app.REMOTING_API
 
 
+  # Parse model Org
   Ext.evalFile 'model/Org'
 
-  # Endpoint, actually
   Ext.endpoint 'Org.find', (r) ->
     txt = 'ГОК'
-    try txt = r.data.filter[0].value
+    try txt = r.data.filter[0].value or 'ГОК'
     console.log r.data
     Ext.Org
       .find({ name: new RegExp txt, 'i' })

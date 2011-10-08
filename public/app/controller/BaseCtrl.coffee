@@ -7,15 +7,23 @@ Ext.define 'App.controller.BaseCtrl',
   refs:
     ref: 'orgList', selector: 'orgList'
 
+  filterTyre: ->
+    ##
+
   init: ->
     console.log 'controller.BaseCtrl init'
-    this.control
+    @filterOrg = Ext.Function.createBuffered @filterOrg, 400
+
+    @control
+
+      'textfield[name=smart]':
+        change: @filterOrg
 
       'orgList':
         selectionchange: (view, records) ->
           rec = records.shift()
           txtPanel = Ext.getCmp 'txt'
-          Org.getText {id: rec.data._id}, (ans) ->
+          Org.getText { id: rec.data._id }, (ans) ->
             if ans.success
               txtPanel.update ans.doc
             else
@@ -28,10 +36,10 @@ Ext.define 'App.controller.BaseCtrl',
           if txt and id
             Org.setText { id: id, txt: txt }, (ans) ->
               txtPanel = Ext.getCmp 'txt'
-              txtPanel.update ans
+              txtPanel.update ans.txt
               
 
-      'orgList button[action=orgNew]':
+      'orgList button[action=orgFind]':
         click: (btn) ->
           store = @getOrgsStore()
           filters = []
@@ -42,3 +50,14 @@ Ext.define 'App.controller.BaseCtrl',
 
           store.filters.items = []
           store.filter filters
+
+  filterOrg: ->
+    console.log 'Buffered'
+    store = @getOrgsStore()
+    txt = @getOrgList().down('textfield[name=smart]').getValue()
+    filters = []
+
+    filters.push property: 'name', value: txt
+
+    store.filters.items = []
+    store.filter filters

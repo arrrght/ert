@@ -4,7 +4,8 @@ Ext.define 'App.view.OrgList',
   store: 'Orgs'
   tbar: [
     { xtype: 'textfield', name: 'smart', emptyText: 'Поиск', flex:1 }
-    { xtype: 'button', action: 'orgNew', text: 'New' }
+    { xtype: 'button', action: 'orgFind', text: 'Поиск' }
+    { xtype: 'button', action: 'orgNew', text: 'Новая' }
   ]
 
   initComponent: ->
