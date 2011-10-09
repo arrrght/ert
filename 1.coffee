@@ -1,6 +1,6 @@
 require('zappa') ->
   [global.Mongoose, fs, vm, coffee] = [require('mongoose'), require('fs'), require('vm'), require('coffee-script')]
-  global.Ext = require './Ext'
+  global.Ext = require './h2e4'
   Mongoose.connect 'mongodb://localhost/foo'
 
   @use 'bodyParser', 'methodOverride', @app.router
@@ -8,14 +8,6 @@ require('zappa') ->
   @use errorHandler: { dumpExceptions: on, showStack: on }
   @use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
   @use @express.compiler({ src: "#{__dirname}/public", enable: ['coffeescript'], minify: yes }), 'static'
-  # Ext.Direct entry
-  @include 'entry'
-
-#  app.get '/view/*', (req, res) ->
-#    res.header 'Content-type', 'text/javascript'
-#    res.render req.url+'.coffee'
-#    #res.partial "#{req.url}.coffee"
-#  #include 'view/index.js'
 
   # TODO: auto populate that
   @client '/direct/api.js': ->
@@ -32,6 +24,8 @@ require('zappa') ->
         ]
     Ext.Direct.addProvider Ext.app.REMOTING_API
 
+  #@post '/direct/entry': -> Ext.entry @request, @response, @next
+  @post '/direct/entry': Ext.entry
 
   # Parse model Org
   Ext.evalFile 'model/Org'
