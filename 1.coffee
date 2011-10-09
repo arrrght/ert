@@ -28,6 +28,7 @@ require('zappa') ->
           { name: 'find', len: 1 }
           { name: 'getText', len: 1 }
           { name: 'setText', len: 1 }
+          { name: 'new', len: 1 }
         ]
     Ext.Direct.addProvider Ext.app.REMOTING_API
 
@@ -68,3 +69,8 @@ require('zappa') ->
             r.failure { message: '???', err: err }
           else
             r.success { txt: doc.txt }
+
+   Ext.endpoint 'Org.new', (r) ->
+    console.log r.data
+    return r.failure 'Params' unless r.data.name
+    r.success { yea: true }

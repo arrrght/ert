@@ -15,9 +15,7 @@ Ext.define 'App.controller.BaseCtrl',
     @filterOrg = Ext.Function.createBuffered @filterOrg, 400
 
     @control
-
-      'textfield[name=smart]':
-        change: @filterOrg
+      'textfield[name=smart]': { change: @filterOrg }
 
       'orgList':
         selectionchange: (view, records) ->
@@ -38,6 +36,10 @@ Ext.define 'App.controller.BaseCtrl',
               txtPanel = Ext.getCmp 'txt'
               txtPanel.update ans.txt
               
+
+      'orgList button[action=orgNew]':
+        click: (btn) ->
+          console.log 'placeholder for orgNew'
 
       'orgList button[action=orgFind]':
         click: (btn) ->
