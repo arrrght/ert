@@ -3,6 +3,16 @@
 # Placeholder for services
 exports.services = {}
 
+# Placeholder for api
+exports.appi = {}
+
+# Write out /api.js
+exports.api = ->
+  result = { type: 'remoting', url: '/direct/entry', actions: Ext.appi }
+  @response.writeHead 200, { 'Content-type': 'text/javascript' }
+  @response.write 'Ext.app.REMOTING_API=' + JSON.stringify result
+  @response.end ';Ext.Direct.addProvider(Ext.app.REMOTING_API);Ext.app.REMOTING_API.enableBuffer=100;'
+
 # Schemas
 exports.Schemes = {}
 
@@ -40,8 +50,15 @@ exports.evalFile = (fileName) ->
   coffee.eval file, { sandbox: { Ext: @ }}
 
 # Regiser endpoint function
-exports.endpoint = (name, fun) ->
+# prm like { formHandler : yes, len: 999 }
+# prm may skipped
+exports.endpoint = (name, prm, fun) ->
+  fun = prm if prm instanceof Function
   [cls, method] = name.split('.')
+  exports.appi[cls] ?= []
+  def = { name: method, len: 1 } # defaults
+  def[key] = prm[key] for key in 'len:name:formHandler'.split ':' when prm[key] if prm isnt fun
+  exports.appi[cls].push def
   @services[cls] ?= {}
   @services[cls][method] = fun
 
@@ -63,9 +80,11 @@ exports.entry = ->
         console.log retSt(@ret.result) + " SRV ↦ \x1b[32m#{@ret.action}.#{@ret.method} : #{rpc.tid}\x1b[0m"
         exports.writeOut resp, (if retArr.length > 1 then retArr else retArr.shift()) if --dataL < 1
       success: (result) ->
+        result = { message: result } if result instanceof String
         result.success ?= true
         @out result
       failure: (result) ->
+        result = { message: result } if result instanceof String
         result.success ?= false
         @out result
       out: (result) ->

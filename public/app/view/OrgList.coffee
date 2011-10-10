@@ -14,7 +14,7 @@ Ext.define 'App.view.OrgList',
   ]
 
   initComponent: ->
-    Ext.apply this,
+    Ext.apply @,
       selType: 'rowmodel'
       columns: [
         { header: 'Имя', dataIndex: 'name', flex: 1 }

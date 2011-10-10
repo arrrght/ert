@@ -3,10 +3,9 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 	<title>ERT2</title>
 		<link rel='stylesheet' href='ext4/resources/css/ext-all.css'/>
-		<script type='text/javascript' src='/zappa/zappa.js'></script>
+		<!-- <script type='text/javascript' src='/zappa/zappa.js'></script> -->
 		<script type='text/javascript' src='/ext4/bootstrap.js'></script>
 		<script type='text/javascript' src='/direct/api.js'></script>
-		<!-- <script type='text/javascript' src='/app/shared.js'></script> -->
 		<script type="text/javascript" charset="utf-8">
 			Ext.Loader.setConfig({ enabled: true, disableCaching: false, paths: { 'App': '/app' }});
 			Ext.application({ autoCreateViewport: true, name: 'App', controllers: [ 'BaseCtrl' ] });
@@ -14,6 +13,11 @@
 				// Ext.create('App.view.ChooserTechTyre').show();
 			});
 		</script>
+    <style>
+#txt .x-item-over{
+    background: #efefef url(over.gif) repeat-x left top;
+}
+    </style>
 </head>
 <body><body>
 </html>

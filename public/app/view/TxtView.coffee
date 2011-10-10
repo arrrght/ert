@@ -11,12 +11,17 @@ Ext.define 'App.view.TxtView',
           '<div class="x-editable"><small>{date}</small></div>'
           '<span class="x-editable">{txt}</span>'
         '</div>'
-        '<hr/>'
         '</tpl>'
         '<div class="x-clear"></div>'
       ]
 
       store: 'Docs'
       itemSelector: 'div.thumb-wrap'
+      trackOver: true,
+      overItemCls: 'x-item-over',
+      autoScroll: true
+      listeners:
+        selectionchange: (dv, nodes) ->
+          console.log dv, nodes
 
     @.callParent arguments

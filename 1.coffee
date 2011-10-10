@@ -9,22 +9,7 @@ require('zappa') ->
   @use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
   @use @express.compiler({ src: "#{__dirname}/public", enable: ['coffeescript'], minify: yes }), 'static'
 
-  # TODO: auto populate that
-  @client '/direct/api.js': ->
-    Ext.app.REMOTING_API =
-      enableBuffer: 100
-      type: 'remoting'
-      url: '/direct/entry'
-      actions:
-        Org: [
-          { name: 'find', len: 1 }
-          { name: 'getText', len: 1 }
-          { name: 'setText', len: 1 }
-          { name: 'new', len: 1 }
-          { name: 'rm', len: 1 }
-        ]
-    Ext.Direct.addProvider Ext.app.REMOTING_API
-
+  @get '/direct/api.js': Ext.api
   @post '/direct/entry': Ext.entry
 
   Ext.evalFile 'model/Org'
@@ -37,14 +22,14 @@ require('zappa') ->
         if err then r.failure err else r.success { message: 'OK' }
 
   Ext.endpoint 'Org.find', (r) ->
-    #txt = 'ГОК'
-    txt = ''
-    try txt = r.data.filter[0].value or txt
-    Ext.Org
-      .find({ name: new RegExp txt, 'i' })
-      .sort('name', 'asc')
-      .execFind (err, docs) ->
-        r.success docs or [{ name: 'NONE' }]
+      #txt = 'ГОК'
+      txt = ''
+      try txt = r.data.filter[0].value or txt
+      Ext.Org
+        .find({ name: new RegExp txt, 'i' })
+        .sort('name', 'asc')
+        .execFind (err, docs) ->
+          r.success docs or [{ name: 'NONE' }]
 
   Ext.endpoint 'Org.getText', (r) ->
     return r.failure 'Can\'t find ID in your params' unless r.data.id
@@ -69,9 +54,9 @@ require('zappa') ->
           else
             r.success { docs: res.docs }
 
-   Ext.endpoint 'Org.new', (r) ->
-    name = r.data.name
-    return r.failure { message: 'Wrong name' } unless r.data.name
-    org = new Ext.Org { name: name }
-    org.save (ok) ->
-      r.success { id: ok }
+  Ext.endpoint 'Org.new', (r) ->
+   name = r.data.name
+   return r.failure 'Wrong name' unless r.data.name
+   org = new Ext.Org { name: name }
+   org.save (ok) ->
+     r.success { id: ok }
