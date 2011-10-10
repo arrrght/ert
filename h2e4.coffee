@@ -1,7 +1,10 @@
 [fs, coffee] = [require('fs'), require('coffee-script')]
 
-# Placehiolder for services
+# Placeholder for services
 exports.services = {}
+
+# Schemas
+exports.Schemes = {}
 
 # ExtJS define
 exports.define = (extName, extData) ->
@@ -10,6 +13,7 @@ exports.define = (extName, extData) ->
 
 # ExtJS Model parsing
 exports.model = (extName, extData) ->
+  return yes if @Schemes[extName]
   fld = {}
   cnvType = (t) ->
     if (t == 'string')
@@ -20,7 +24,14 @@ exports.model = (extName, extData) ->
   extData.fields.map (fldName) ->
     fld[fldName.name] = cnvType(fldName.type) unless fldName.name is '_id'
 
-  console.log 'Model', extName, fld
+  console.log 'Extracting model', extName
+
+  # Parsing hasMany
+  if extData.hasMany
+    exports.evalFile "model/#{extData.hasMany.model}"
+    fld[extData.hasMany.name] = [@Schemes[extData.hasMany.model]]
+
+  @Schemes[extName] = new Mongoose.Schema fld
   @[extName] = Mongoose.model extName, new Mongoose.Schema fld
 
 # Eval file
@@ -35,14 +46,12 @@ exports.endpoint = (name, fun) ->
   @services[cls][method] = fun
 
 # Entry
-#exports.entry = (req, resp, next) ->
 exports.entry = ->
-  req = @request
-  resp = @response
-  data = if req.body instanceof Array then req.body else [req.body]
+  data = if @request.body instanceof Array then @request.body else [@request.body]
   dataL = data.length
-  [retArr, me] = [[], @]
+  [retArr, resp] = [[], @response]
 
+  retSt = (result) -> if result.success then '\x1b[32mSuccess\x1b[0m' else '\x1b[31mFailure\x1b[0m'
   data.map (rpc) ->
     console.log "SRV ↤ \x1b[32m#{rpc.action}.#{rpc.method} : #{rpc.tid}\x1b[0m"
 
@@ -51,7 +60,7 @@ exports.entry = ->
       data: rpc.data.shift()
       ret: { action: rpc.action, method: rpc.method, tid: rpc.tid, type: rpc.type, result: {} }
       respond: ->
-        console.log "SRV ↦ \x1b[32m#{@ret.action}.#{@ret.method} : #{rpc.tid}\x1b[0m"
+        console.log retSt(@ret.result) + " SRV ↦ \x1b[32m#{@ret.action}.#{@ret.method} : #{rpc.tid}\x1b[0m"
         exports.writeOut resp, (if retArr.length > 1 then retArr else retArr.shift()) if --dataL < 1
       success: (result) ->
         result.success ?= true
@@ -66,7 +75,7 @@ exports.entry = ->
 
     # Call endpoint
     try
-      proc = Ext.services[rpc.action][rpc.method].call this, reply
+      proc = exports.services[rpc.action][rpc.method].call this, reply
     catch e
       reply.failure e
 

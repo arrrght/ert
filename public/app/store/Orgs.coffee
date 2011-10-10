@@ -9,9 +9,3 @@ Ext.define 'App.store.Orgs',
   proxy:
     type: 'direct'
     directFn: Org.find
-
-###
-  data: [
-    { id: 1, name: 'asdad', addr: 'asdasdad' }
-    { id: 2, name: '23123', addr: '11212141' }
-  ]

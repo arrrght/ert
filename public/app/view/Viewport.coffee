@@ -13,14 +13,21 @@ Ext.define 'App.view.Viewport',
         ,
           flex: 1, layout: { type: 'vbox', align: 'stretch' }
           items: [
-            flex: 1, xtype: 'panel'
-            id: 'txt'
-            #dockedItems:
-            #  xtype: 'toolbar', dock: 'bottom'
-            #  items:
-            #    action: 'phoneCall'
-            #    text: 'Телефонный звонок'
-            html: 'right<b>bold</b>', flex: 1
+            id: 'txt', flex: 1,
+            items:
+              Ext.create 'Ext.view.View',
+                tpl: [
+                  '<tpl for=".">'
+                  '<div class="thumb-wrap">'
+                    '<div class="x-editable">{date}</div>'
+                    '<span class="x-editable">{txt}</span>'
+                  '</div>'
+                  '</tpl>'
+                  '<div class="x-clear"></div>'
+                ]
+
+                store: 'Docs'
+                itemSelector: 'div.thumb-wrap'
           ,
             xtype: 'splitter'
           ,

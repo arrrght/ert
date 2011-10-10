@@ -24,15 +24,14 @@ require('zappa') ->
         ]
     Ext.Direct.addProvider Ext.app.REMOTING_API
 
-  #@post '/direct/entry': -> Ext.entry @request, @response, @next
   @post '/direct/entry': Ext.entry
 
-  # Parse model Org
   Ext.evalFile 'model/Org'
 
   Ext.endpoint 'Org.find', (r) ->
-    txt = 'ГОК'
-    try txt = r.data.filter[0].value or 'ГОК'
+    #txt = 'ГОК'
+    txt = '123'
+    try txt = r.data.filter[0].value or txt
     console.log r.data
     Ext.Org
       .find({ name: new RegExp txt, 'i' })
@@ -48,23 +47,26 @@ require('zappa') ->
         r.failure { message: 'Can\'t find that.' }
       else
         console.log doc
-        r.success { doc: doc.txt }
+        r.success { docs: doc.docs, org: doc }
 
   Ext.endpoint 'Org.setText', (r) ->
     console.log r.data
     return r.failure 'PRM' unless r.data.id
-    Ext.Org.findById r.data.id, (err, doc) ->
-      if err or !doc
+    doc = new Ext.Doc { date: new Date, txt: r.data.txt }
+    Ext.Org.findById r.data.id, (err, res) ->
+      if err or !res
         r.failure { message: 'Can\'t find that.' }
       else
-        doc.txt = r.data.txt
-        doc.save (err) ->
+        res.docs.push doc
+        res.save (err) ->
           if err
             r.failure { message: '???', err: err }
           else
-            r.success { txt: doc.txt }
+            r.success { txt: res }
 
    Ext.endpoint 'Org.new', (r) ->
-    console.log r.data
+    name = r.data.name
     return r.failure 'Params' unless r.data.name
-    r.success { yea: true }
+    org = new Ext.Org { name: name }
+    org.save (ok) ->
+      r.success { id: ok }

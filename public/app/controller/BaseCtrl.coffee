@@ -1,8 +1,8 @@
 Ext.define 'App.controller.BaseCtrl',
   extend: 'Ext.app.Controller'
 
-  stores: [ 'Orgs' ]
-  models: [ 'Org' ]
+  stores: [ 'Orgs', 'Docs' ]
+  models: [ 'Org', 'Doc' ]
 
   refs:
     ref: 'orgList', selector: 'orgList'
@@ -18,14 +18,7 @@ Ext.define 'App.controller.BaseCtrl',
       'textfield[name=smart]': { change: @filterOrg }
 
       'orgList':
-        selectionchange: (view, records) ->
-          rec = records.shift()
-          txtPanel = Ext.getCmp 'txt'
-          Org.getText { id: rec.data._id }, (ans) ->
-            if ans.success
-              txtPanel.update ans.doc
-            else
-              txtPanel.update "ERROR: #{ans.message}"
+        selectionchange: @displayDocs
 
       'button[action=phoneCall]':
         click: (btn) ->
@@ -33,13 +26,19 @@ Ext.define 'App.controller.BaseCtrl',
           id = @getOrgList().getSelectionModel().getSelection()?[0]?.data?._id
           if txt and id
             Org.setText { id: id, txt: txt }, (ans) ->
+              console.log ans
               txtPanel = Ext.getCmp 'txt'
               txtPanel.update ans.txt
               
 
       'orgList button[action=orgNew]':
         click: (btn) ->
-          console.log 'placeholder for orgNew'
+          txt = btn.up().down('textfield[name=smart]').getValue()
+          store = @getOrgsStore()
+          Org.new { name: txt }, (ans) ->
+            if ans.success
+              store.filters.items = []
+              store.filter [{ property: 'name', value: txt }]
 
       'orgList button[action=orgFind]':
         click: (btn) ->
@@ -52,6 +51,18 @@ Ext.define 'App.controller.BaseCtrl',
 
           store.filters.items = []
           store.filter filters
+
+  displayDocs: (view, records) ->
+    rec = records.shift()
+    txtPanel = Ext.getCmp 'txt'
+    console.log 'txtPanel', txtPanel
+    store = @getDocsStore()
+    Org.getText { id: rec.data._id }, (ans) ->
+      console.log ans
+      if ans.success
+        store.loadData ans.docs
+      else
+        txtPanel.update "ERROR: #{ans.message}"
 
   filterOrg: ->
     console.log 'Buffered'
