@@ -3,4 +3,5 @@ public/app/model/*.js
 public/app/store/*.js
 public/app/controller/*.js
 public/app/view/*.js
+public/app/ux/form/*.js
 .DS_Store

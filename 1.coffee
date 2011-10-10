@@ -1,7 +1,7 @@
 require('zappa') ->
   [global.Mongoose, fs, vm, coffee] = [require('mongoose'), require('fs'), require('vm'), require('coffee-script')]
   global.Ext = require './h2e4'
-  Mongoose.connect 'mongodb://localhost/foo'
+  Mongoose.connect 'mongodb://localhost/foo2'
 
   @use 'bodyParser', 'methodOverride', @app.router
   @enable 'minify'
@@ -21,6 +21,7 @@ require('zappa') ->
           { name: 'getText', len: 1 }
           { name: 'setText', len: 1 }
           { name: 'new', len: 1 }
+          { name: 'rm', len: 1 }
         ]
     Ext.Direct.addProvider Ext.app.REMOTING_API
 
@@ -28,11 +29,17 @@ require('zappa') ->
 
   Ext.evalFile 'model/Org'
 
+  Ext.endpoint 'Org.rm', (r) ->
+    return failure { message: 'Can\'t get a ID '} unless r.data.id
+    Ext.Org.findById r.data.id, (err, res) ->
+      return failure { message: 'Can\'t find that'} if err or not res
+      res.remove (err) ->
+        if err then r.failure err else r.success { message: 'OK' }
+
   Ext.endpoint 'Org.find', (r) ->
     #txt = 'ГОК'
-    txt = '123'
+    txt = ''
     try txt = r.data.filter[0].value or txt
-    console.log r.data
     Ext.Org
       .find({ name: new RegExp txt, 'i' })
       .sort('name', 'asc')
@@ -41,16 +48,14 @@ require('zappa') ->
 
   Ext.endpoint 'Org.getText', (r) ->
     return r.failure 'Can\'t find ID in your params' unless r.data.id
-    console.log r.data.id
     Ext.Org.findById r.data.id, (err, doc) ->
       if err or !doc
         r.failure { message: 'Can\'t find that.' }
       else
         console.log doc
-        r.success { docs: doc.docs, org: doc }
+        r.success { docs: doc.docs }
 
   Ext.endpoint 'Org.setText', (r) ->
-    console.log r.data
     return r.failure 'PRM' unless r.data.id
     doc = new Ext.Doc { date: new Date, txt: r.data.txt }
     Ext.Org.findById r.data.id, (err, res) ->
@@ -62,11 +67,11 @@ require('zappa') ->
           if err
             r.failure { message: '???', err: err }
           else
-            r.success { txt: res }
+            r.success { docs: res.docs }
 
    Ext.endpoint 'Org.new', (r) ->
     name = r.data.name
-    return r.failure 'Params' unless r.data.name
+    return r.failure { message: 'Wrong name' } unless r.data.name
     org = new Ext.Org { name: name }
     org.save (ok) ->
       r.success { id: ok }

@@ -7,11 +7,7 @@ Ext.define 'App.controller.BaseCtrl',
   refs:
     ref: 'orgList', selector: 'orgList'
 
-  filterTyre: ->
-    ##
-
   init: ->
-    console.log 'controller.BaseCtrl init'
     @filterOrg = Ext.Function.createBuffered @filterOrg, 400
 
     @control
@@ -19,17 +15,16 @@ Ext.define 'App.controller.BaseCtrl',
 
       'orgList':
         selectionchange: @displayDocs
+        itemcontextmenu: this.orgListContext
 
       'button[action=phoneCall]':
         click: (btn) ->
           txt = btn.up().up().down('textareafield').value
           id = @getOrgList().getSelectionModel().getSelection()?[0]?.data?._id
+          store = @getDocsStore()
           if txt and id
             Org.setText { id: id, txt: txt }, (ans) ->
-              console.log ans
-              txtPanel = Ext.getCmp 'txt'
-              txtPanel.update ans.txt
-              
+              store.loadData ans.docs
 
       'orgList button[action=orgNew]':
         click: (btn) ->
@@ -52,13 +47,25 @@ Ext.define 'App.controller.BaseCtrl',
           store.filters.items = []
           store.filter filters
 
+  orgListContext: (view, record, item, index, e) ->
+    console.log 'E', e
+    e.stopEvent()
+    Ext.create('Ext.menu.Menu',
+      items: [
+        text: 'Удалить', handler: ->
+          Org.rm { id: record.data._id }, (ok) ->
+            console.log ok
+          #record.store.remove record
+      ]
+    ).showAt e.getXY()
+
   displayDocs: (view, records) ->
     rec = records.shift()
+    return unless rec
     txtPanel = Ext.getCmp 'txt'
     console.log 'txtPanel', txtPanel
     store = @getDocsStore()
     Org.getText { id: rec.data._id }, (ans) ->
-      console.log ans
       if ans.success
         store.loadData ans.docs
       else

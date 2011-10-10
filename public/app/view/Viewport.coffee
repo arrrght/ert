@@ -1,38 +1,26 @@
 Ext.define 'App.view.Viewport',
   extend: 'Ext.container.Viewport'
   layout: 'fit'
-  requires: [ 'App.view.OrgList' ]
+  requires: [ 'App.view.OrgList', 'App.view.TxtView' ]
 
   initComponent: ->
-    console.log 'view.Viewport init'
-    Ext.apply this,
+    Ext.apply @,
       items:
         layout: { type: 'hbox', align: 'stretch' }
         items: [
           width: 350, xtype: 'orgList'
         ,
+          xtype: 'splitter'
+        ,
           flex: 1, layout: { type: 'vbox', align: 'stretch' }
           items: [
-            id: 'txt', flex: 1,
-            items:
-              Ext.create 'Ext.view.View',
-                tpl: [
-                  '<tpl for=".">'
-                  '<div class="thumb-wrap">'
-                    '<div class="x-editable">{date}</div>'
-                    '<span class="x-editable">{txt}</span>'
-                  '</div>'
-                  '</tpl>'
-                  '<div class="x-clear"></div>'
-                ]
-
-                store: 'Docs'
-                itemSelector: 'div.thumb-wrap'
+            id: 'txt', flex: 1, xtype: 'txtview'
           ,
             xtype: 'splitter'
           ,
             id: 'ASD'
             height: 150, layout: { type: 'fit' }
+            border: false
             items:
               xtype: 'textarea'
             dockedItems:
@@ -43,4 +31,4 @@ Ext.define 'App.view.Viewport',
                 text: 'Телефонный звонок'
           ]
         ]
-    this.callParent arguments
+    @.callParent arguments
