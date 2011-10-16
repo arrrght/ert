@@ -5,6 +5,15 @@ require('zappa') ->
   @enable 'serve sammy', 'minify', 'serve jquery'
 
   @get '/': -> @render 'index'
+  @get '/new': ->
+    # generate newId and redirect to new page
+    @redirect '/org/123'
+
+  @get '/org/:id': ->
+    # Render start's page
+    @render 'org'
 
   @view 'index': ->
     @title = 'PicoChat!'
+
+    
