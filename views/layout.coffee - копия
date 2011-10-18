@@ -1,12 +1,8 @@
 doctype 5
 html ->
   head ->
-    title @title or 'ERT'
+    title "ert3"
     link href: '/css/bootstrap.min.css', rel: 'stylesheet'
-    script src: '/zappa/jquery.js'
-    script src: '/zappa/zappa.js'
-    script src: '/zappa/sammy.js'
-    script src: '/index.js'
     style type: 'text/css', '''
       body { padding-top: 60px; }
       .topbar .btn { border: 0; } 
@@ -17,19 +13,14 @@ html ->
       .pull-right button { margin-left: 2px; }
       h2 { margin-top: -16px; }
       .xsmall { height: 8px; font-size: 10px; margin-left: 8px; padding-top: 2px; margin-bottom: -4px; }
-      .activePanel { margin-bottom: 8px; }
       .tel blockquote { margin-top: 16px; }
       .w_input ul { padding-top: 38px; }
-      .btn-ok { margin-top: -14px; margin-right: -4px; }
-      .phone-form blockquote { margin-top: 0px; }
-      .phone-form blockquote .inline-inputs { margin-top: 12px; }
-      .phone-form blockquote .inline-inputs span { margin-left: 12px; margin-right: 12px; }
     '''
 body ->
   div class: 'topbar', ->
     div class: 'topbar-inner', ->
       div class: 'container-fluid', ->
-        a class: 'brand', href: '#/', 'ERT'
+        a class: 'brand', href: '#', 'ERT'
         ul class: 'nav', ->
           li class: 'active', -> a href: '#', 'Home'
           li -> a href: '#', 'Home'
@@ -43,37 +34,24 @@ body ->
 
     div class: 'sidebar', ->
       div class: 'well w_input', ->
-        h5 ->
-          text 'Организации'
-          a href: '#', class: 'btn xsmall danger', 'Новая'
+        h5 'Организации'
         div class: 'input', ->
           div class: 'input-append', ->
-            input class: 'span5', type: 'text', id: 'smart', placeholder: 'Поиск...'
+            input class: 'span5', type: 'text', placeholder: 'Поиск...'
             label class: 'add-on', ->
-              a href: '#', class: 'button', id: 'smart-clear', 'X'
-
-        # Sample orgs
-        ul class: 'orgs', ->
+              a href: '#', class: 'button', 'X'
+        ul ->
           li -> a href: '#', 'Бошняковский угольный разрез'
           li -> a href: '#', 'Полюс Золото'
           li -> a href: '#', 'Щербинский механический завод'
           li -> a href: '#', 'АХРСУ Гескол имени Ленина, трижды краснознаменный'
 
-      # Sample people
-      div class: 'well ppls', ->
-        h5 'Сотрудники'
+      div class: 'well', ->
+        h5 'Задачи'
         ul ->
-          li -> a href: '#', 'Анатолий Иванович <span class="label">менеджер по продажам</span>'
-          li -> a href: '#', 'Алексей Федорович Крузерштерн <span class="label">директор<span>'
-          li -> a href: '#', 'Василий Иванович'
-
-      # Sample Tasks [ not workin' ]
-      #div class: 'well', ->
-      #  h5 'Задачи [ пока не работает ]'
-      #  ul ->
-      #    li -> a href: '#', 'Задача 123'
-      #    li -> a href: '#/job/1', 'Задача 1'
-      #    li -> a href: '/new', 'Задача 1'
+          li -> a href: '#', 'Задача 123'
+          li -> a href: '#', 'Задача 1'
+          li -> a href: '#', 'Задача 1'
 
     div class: 'content', ->
       h2 'Последние действия'
@@ -114,5 +92,5 @@ body ->
 
       div class: 'well tel', ->
         blockquote ->
-          p 'Еще сегодня был на месте, но сегодня уже не будет. Перезвоните завтра после обеда <a href="#/job/asd">XXXXXX</a>'
+          p 'Еще сегодня был на месте, но сегодня уже не будет. Перезвоните завтра после обеда'
           small 'Секретарь + 7 (34312) 2-54-11'
