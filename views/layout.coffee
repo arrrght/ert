@@ -24,6 +24,9 @@ html ->
       .phone-form blockquote { margin-top: 0px; }
       .phone-form blockquote .inline-inputs { margin-top: 12px; }
       .phone-form blockquote .inline-inputs span { margin-left: 12px; margin-right: 12px; }
+      .phone-form .pull-right { margin-top: -18px; margin-right: -4px; }
+      .phone-form .pull-right .btn { margin-left: 8px; }
+      .phone-form .pull-right :last-child { margin-right: 0px; }
     '''
 body ->
   div class: 'topbar', ->
@@ -45,27 +48,27 @@ body ->
       div class: 'well w_input', ->
         h5 ->
           text 'Организации'
-          a href: '#', class: 'btn xsmall danger', 'Новая'
+          a href: '/#/newOrg', class: 'btn xsmall danger', 'Новая'
         div class: 'input', ->
           div class: 'input-append', ->
             input class: 'span5', type: 'text', id: 'smart', placeholder: 'Поиск...'
             label class: 'add-on', ->
-              a href: '#', class: 'button', id: 'smart-clear', 'X'
+              a href: '/#/', class: 'button', id: 'smart-clear', 'X'
 
         # Sample orgs
         ul class: 'orgs', ->
-          li -> a href: '#', 'Бошняковский угольный разрез'
-          li -> a href: '#', 'Полюс Золото'
-          li -> a href: '#', 'Щербинский механический завод'
-          li -> a href: '#', 'АХРСУ Гескол имени Ленина, трижды краснознаменный'
+          #li -> a href: '#', 'Бошняковский угольный разрез'
+          #li -> a href: '#', 'Полюс Золото'
+          #li -> a href: '#', 'Щербинский механический завод'
+          #li -> a href: '#', 'АХРСУ Гескол имени Ленина, трижды краснознаменный'
 
       # Sample people
       div class: 'well ppls', ->
         h5 'Сотрудники'
         ul ->
-          li -> a href: '#', 'Анатолий Иванович <span class="label">менеджер по продажам</span>'
-          li -> a href: '#', 'Алексей Федорович Крузерштерн <span class="label">директор<span>'
-          li -> a href: '#', 'Василий Иванович'
+          #li -> a href: '#', 'Анатолий Иванович <span class="label">менеджер по продажам</span>'
+          #li -> a href: '#', 'Алексей Федорович Крузерштерн <span class="label">директор<span>'
+          #li -> a href: '#', 'Василий Иванович'
 
       # Sample Tasks [ not workin' ]
       #div class: 'well', ->
