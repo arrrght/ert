@@ -7,9 +7,11 @@ html ->
     script src: '/zappa/zappa.js'
     script src: '/zappa/sammy.js'
     script src: '/index.js'
+    noscript 'Браузер не поддерживает JavaScript.'
     style type: 'text/css', '''
       body { padding-top: 60px; }
       .topbar .btn { border: 0; } 
+      .container-fluid { height: 40px; }
       .container-fluid > .sidebar { float: left; width: 333px; }
       .container-fluid > .content { margin-left: 353px; } 
       .well { padding: 12px; padding-top: 0px; padding-bottom: 0px; }
@@ -20,27 +22,33 @@ html ->
       .activePanel { margin-bottom: 8px; }
       .tel blockquote { margin-top: 16px; }
       .w_input ul { padding-top: 38px; }
-      .btn-ok { margin-top: -14px; margin-right: -4px; }
       .phone-form blockquote { margin-top: 0px; }
       .phone-form blockquote .inline-inputs { margin-top: 12px; }
       .phone-form blockquote .inline-inputs span { margin-left: 12px; margin-right: 12px; }
       .phone-form .pull-right { margin-top: -18px; margin-right: -4px; }
       .phone-form .pull-right .btn { margin-left: 8px; }
       .phone-form .pull-right :last-child { margin-right: 0px; }
+      .phone-form .inline-inputs :first-child { margin-left: -16px; }
+      .bar-btn-group { margin-top: 5px; margin-right: 8px; }
     '''
 body ->
   div class: 'topbar', ->
     div class: 'topbar-inner', ->
       div class: 'container-fluid', ->
         a class: 'brand', href: '#/', 'ERT'
-        ul class: 'nav', ->
-          li class: 'active', -> a href: '#', 'Home'
-          li -> a href: '#', 'Home'
-          li -> a href: '#', 'Home'
-        form action: '', class: 'pull-right', ->
+        #ul class: 'nav pull-right', ->
+          #li class: 'active', -> a href: '#', 'Home'
+          #li -> a href: '#', 'Home'
+
+        form class: 'pull-right', ->
           input class: 'input-small', type: 'text', placeholder: 'Username'
           input class: 'input-small', type: 'password', placeholder: 'Password'
           button class: 'btn', type: 'submit', 'Вход'
+        div class: 'bar-btn-group pull-right', ->
+          button class: 'btn small danger', id: 'btn-rm-org', 'Удалить компанию'
+          button class: 'btn small danger', id: 'btn-rm-ppl', 'Удалить человека'
+          button class: 'btn small success', id: 'btn-add-tel', '+ телефонный разговор'
+          #a href: '/#/org/#{params._id}', class: 'btn success', 'ASDASDASD'
 
   div class: 'container-fluid', ->
 
