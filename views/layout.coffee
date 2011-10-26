@@ -20,30 +20,36 @@ html ->
       h2 { margin-top: -16px; }
       .xsmall { height: 8px; font-size: 10px; margin-left: 8px; padding-top: 2px; margin-bottom: -4px; }
       .activePanel { margin-bottom: 8px; }
-      .tel blockquote { margin-top: 16px; }
       .w_input ul { padding-top: 38px; }
       .phone-form blockquote { margin-top: 0px; }
       .phone-form blockquote .inline-inputs { margin-top: 12px; }
       .phone-form blockquote .inline-inputs span { margin-left: 12px; margin-right: 12px; }
-      .phone-form .pull-right { margin-top: -18px; margin-right: -4px; }
+      .phone-form .pull-right { margin-top: -24px; margin-right: -4px; }
       .phone-form .pull-right .btn { margin-left: 8px; }
       .phone-form .pull-right :last-child { margin-right: 0px; }
       .phone-form .inline-inputs :first-child { margin-left: -16px; }
       .bar-btn-group { margin-top: 5px; margin-right: 8px; }
+      .container-fluid .date { color: #777777 }
+      .content .well blockquote { margin-top: 8px; margin-bottom: 8px; }
+      .content .well { margin-bottom: 8px; }
+      XXX .content .well h4 a { color: black }
+      .content .well h4 { margin-bottom: -10px; }
     '''
 body ->
   div class: 'topbar', ->
     div class: 'topbar-inner', ->
       div class: 'container-fluid', ->
-        a class: 'brand', href: '#/', 'ERT'
+        a class: 'brand', href: '#/', ->
+          text 'ERT'
+        #small 'Среда, 23 января 2011 г.'
         #ul class: 'nav pull-right', ->
           #li class: 'active', -> a href: '#', 'Home'
           #li -> a href: '#', 'Home'
 
-        form class: 'pull-right', ->
-          input class: 'input-small', type: 'text', placeholder: 'Username'
-          input class: 'input-small', type: 'password', placeholder: 'Password'
-          button class: 'btn', type: 'submit', 'Вход'
+        #form class: 'pull-right', ->
+        #  input class: 'input-small', type: 'text', placeholder: 'Username'
+        #  input class: 'input-small', type: 'password', placeholder: 'Password'
+        #  button class: 'btn', type: 'submit', 'Вход'
         div class: 'bar-btn-group pull-right', ->
           button class: 'btn small danger', id: 'btn-rm-org', 'Удалить компанию'
           button class: 'btn small danger', id: 'btn-rm-ppl', 'Удалить человека'

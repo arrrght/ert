@@ -8,9 +8,18 @@ require('zappa') ->
   Mongoose.connect 'mongodb://localhost/foo2'
 
   # Schemas
-  DocSchema = new Mongoose.Schema { author: String, date: String, txt: String }
+  Doc2Schema = new Mongoose.Schema { touch: Date, org: Mongoose.Schema.ObjectId, author: Mongoose.Schema.ObjectId, txt: String, dat: Date }
+  Ppl2Schema = new Mongoose.Schema { touch: Date, org: Mongoose.Schema.ObjectId, name: String, post: String, tel: String }
+  Org2Schema = new Mongoose.Schema { touch: Date, name: String, addr: String }
+
+  Org2 = Mongoose.model 'org2', Org2Schema
+  Doc2 = Mongoose.model 'doc2', Doc2Schema
+  Ppl2 = Mongoose.model 'ppl2', Ppl2Schema
+
+  DocSchema = new Mongoose.Schema { author: String, date: String, txt: String, dat: Date }
   PplSchema = new Mongoose.Schema { name: String, post: String, tel: String }
   OrgSchema = new Mongoose.Schema { name: String, addr: String, ppls: [PplSchema], docs: [ DocSchema ] }
+
   Org = Mongoose.model 'org', OrgSchema
   Doc = Mongoose.model 'doc', DocSchema
   Ppl = Mongoose.model 'doc', PplSchema
@@ -24,18 +33,26 @@ require('zappa') ->
     
     buttonsOn = (stage) ->
       st =
-        root: 'no rm-org, no add-tel, no rm-ppl'
-        org: 'add-tel, rm-org, no rm-ppl'
-        tel: 'no rm-org, no add-tel, rm-ppl'
+        root: 'no .ppls, no #btn-rm-org, no #btn-add-tel, no #btn-rm-ppl'
+        org: '#btn-add-tel, #btn-rm-org, no #btn-rm-ppl'
+        tel: 'no #btnOtherPpl, no #btn-rm-org, no #btn-add-tel, #btn-rm-ppl'
+        telFor: 'no #btn-rm-org, no #btn-add-tel, #btn-rm-ppl'
       st[stage].split(', ').map (b) ->
         m = b.match '^no\ (.+)$'
-        if m isnt null then hide "#btn-#{m[1]}" else show "#btn-#{b}"
+        if m isnt null then hide m[1] else show b
 
     clean = ->
       content = $ '.content'
       ppl = $ '.ppls ul'
       content.empty()
       ppl.empty()
+
+    showDate = (d) ->
+      d = new Date(d) if d
+      d = new Date
+      mo = 'января февраля марта апреля мая июня июля августа сентября октября декабря'.split ' '
+      da = 'воскресенье понедельник вторник среда четверг пятница суббота'.split ' '
+      "#{da[d.getDay()]}, #{d.getDate()} #{mo[d.getMonth()]} #{d.getFullYear()} г."
 
     findOrg = (name) ->
       fnd = $('#smart').val()
@@ -59,7 +76,6 @@ require('zappa') ->
         "</div>"
         "<small>Тарас Атаманкин</small>"
         "<span class='pull-right'>"
-          #"<a href='/#/org/#{params.id}/rmPpl' class='btn danger' id='btnRmPpl'>Удалить человека</a>"
           "<a class='btn info' id='btnOtherPpl'>Другой человек?</a>"
           "<a href='/#/org/#{params.id}' class='btn danger'>Отмена</a>"
           "<a href='/#/org/#{params.id}/newTelOk' class='btn success'>OK</a>"
@@ -78,10 +94,11 @@ require('zappa') ->
     # Org body
     blockOrgBody = (params) -> [
       "<div class='well tel'><blockquote>"
-        "<p>#{params.txt}</p>"
-        "<small>#{params.date}"
+        "<p>#{params.txt.replace /\n/g, '<br/>'}</p>"
+        "<small>"
+        if params.dat then showDate(params.dat) else params.date
         ", #{params.who}" if params.who
-        "[ #{params.tel} ]</small>" if params.tel
+        " [ #{params.tel} ]</small>" if params.tel
       "</blockquote></div>"
     ].join ''
 
@@ -101,7 +118,8 @@ require('zappa') ->
       $.getJSON "/getOrgInfo/#{id}", (data) ->
         document.o = data
         content.empty()
-        content.append blockOrgHead data
+        console.log data.org.name
+        content.append blockOrgHead data.org
         data.docs.reverse().map (d) -> content.append blockOrgBody d
         # map Ppl
         ppl.replaceWith '<ul>' + ((data.ppls.map (d) -> blockOrgPpl d, id).join '') + '</ul>'
@@ -109,18 +127,17 @@ require('zappa') ->
         callback() if callback
 
     # JQuery helpers
-    show = (prm...) -> prm.map (p) -> if $.isFunction(p) then p.apply(@) else $(p).show()
-    hide = (prm...) -> prm.map (p) -> if $.isFunction(p) then p.apply(@) else $(p).hide()
+    show = (prm...) -> prm.map (p) -> $(p).show()
+    hide = (prm...) -> prm.map (p) -> $(p).hide()
 
     # Routes (sammy)
     # Org view
     @get '#/org/:id': (ctx) ->
       buttonsOn 'org'
-      show '#btn-rm-org'
       getAndFillOrg @params.id
 
     @get '#/org/:id/newTel/ppl/:ppl': (ctx) ->
-      buttonsOn 'tel'
+      buttonsOn 'telFor'
       unless document.o
         getAndFillOrg @params.id, -> ctx.redirect ctx.sammy_context.path + '?R' # redirect to self
         return false
@@ -154,10 +171,10 @@ require('zappa') ->
       unless document.o
         getAndFillOrg @params.id, -> ctx.redirect ctx.sammy_context.path + '?R' # redirect to self
         return false
-      buttonsOn 'tel'
       content = $ '#btnPanel'
       $(blockTel @params).replaceAll content
       $('#btnOtherPpl').click btnOtherPplPressed
+      buttonsOn 'tel'
 
     @get '#/org/:id/newTelOk': (ctx) ->
       buttonsOn 'tel'
@@ -176,8 +193,35 @@ require('zappa') ->
 
     @get '/#/': ->
       buttonsOn 'root'
+      content = $ '.content'
+      $.getJSON "/root", (data) ->
+        content.empty()
+        content.append '<h2>Последние действия</h2>'
+        data.map (d) ->
+          txt = d.doc.txt.replace /\n/g, '<br/>'
+          content.append [
+            "<div class='well'>"
+              "<h4>"
+                "<a href='/#/org/#{d.org._id}'>#{d.org.name}</a>"
+                #"<a href='#' class='btn xsmall success'>Далее</a>"
+              "</h4>"
+              "<blockquote>"
+                "<p>#{txt}</p>"
+                "<small>"
+                  "#{showDate(d.doc.dat)}, Тарас Атаманкин, телефонный звонок: #{d.doc.who}, по телефону #{d.doc.tel}"
+                "</small>"
+              "</blockquote>"
+            "</div>"
+          ].join ''
+
+      console.log '***', @
+      buttonsOn 'root'
+      $.get '/root', (data) ->
+        console.log 'ROOT', data
 
     $(document).ready ->
+
+      $('.container-fluid:first').append "<small class='date'>#{showDate()}</small>"
       findOrg()
 
       $('#btn-add-tel').click ->
@@ -210,77 +254,73 @@ require('zappa') ->
         findOrg()
   # End-of-client
 
+  # Helper for parallel fetch
+  doIt = (funs, callback ) ->
+    aggr = {}
+    cnt = Object.keys(funs).length
+    for key, val of funs # Kill me gently
+      ((key,val) -> val.execFind (err, res) =>
+        if key[0] is '$' then aggr[key.substring 1] = res.pop() else aggr[key]=res
+        callback(aggr) if --cnt is 0
+      )(key, val)
+
   # Server-side
+  @get '/root', ->
+    ret = []
+    Doc2
+      .find()
+      .desc('dat')
+      .limit(25)
+      .execFind (err, result) =>
+        cnt = result.length
+        result.map (doc) =>
+          Org2.findById doc.org, (err, res) =>
+            ret.push { doc: doc , org: res }
+            @send ret if --cnt == 0
+
   @post '/rmPpl', ->
     return { err: 'nothing' } unless @body.ppl
-    that = @
-    Org.findById @body.org, (err, res) ->
-      res.ppls.map (p) ->
-        if p._id.toString() is that.body.ppl
-          p.remove (err) ->
-            res.save()
-            unless err then that.send { ok: yes } else that.send { err: err }
+    Ppl2.remove { _id: @body.ppl }, (err, res) =>
+      @send { ok: yes }
 
   @post '/rmOrg', ->
     return { err: 'nothing to do' } unless @body.id
-    that = @
-    Org.findById @body.id, (err, res) ->
-      that.send { err: 'Can\'t find that' } if err or not res
-      res.remove (err) ->
-        if err then that.send err: err else that.send { ok: yes }
+    Org2.findById @body.id, (err, res) =>
+      @send { err: 'Can\'t find that' } if err or not res
+      res.remove (err) =>
+        if err then @send err: err else @send { ok: yes }
     
   @post '/newOrg', ->
     return { err: 'nothing to do' } unless @body.name
-    that = @
-    org = new Org { name: @body.name }
-    org.save (ok) ->
-      that.send { ok: yes }
+    org = new Org2 { touch: new Date(), name: @body.name }
+    org.save (ok) => @send { ok: yes }
 
   @post '/newTel', ->
-    return @send { err: 'nothing to do' } unless @body.org
-    that = @
-    Org.findById @body.org, (err, res) ->
-      that.send { err: 'Can not find Org' } if err or not res
-      if that.body.txt
-        doc = new Doc { date: new Date, txt: that.body.txt, who: that.body.who, tel: that.body.tel  }
-        res.docs.push doc
-      if that.body.pplID and that.body.other isnt 'true'
-        console.log 'Got pplID', that.body.pplID
-        res.ppls.map (p) ->
-          if p._id.toString() is that.body.pplID
-            console.log that.body
-            p.name = that.body.who
-            p.tel = that.body.tel
-            p.post = that.body.post
-      else if that.body.who
-        ppl = new Ppl { name: that.body.who, tel: that.body.tel, post: that.body.post }
-        res.ppls.push ppl
-      res.save (err) ->
-        that.send { ok: yes }
+    return { err: 'nothing to do' } unless @body.org
+    if @body.txt
+      (new Doc2 { touch: new Date(), org: @body.org, dat: new Date, txt: @body.txt, who: @body.who, tel: @body.tel  }).save() # Don't care
+    if @body.pplID and @body.other isnt 'true'
+      Ppl2.update { _id: @body.pplID }, { touch: new Date(), name: @body.who, tel: @body.tel, post: @body.post }, (err, res) =>
+        # Don't care
+    else # New ppl
+      (new Ppl2({ touch: new Date(), org: @body.org, name: @body.who, tel: @body.tel, post: @body.post })).save() # Don't care
+    @send { ok : yes } # Always yes
 
   @get '/getOrgInfo/:id?': ->
-    that = @
-    Org.findById @params.id, (err, res) ->
-      that.send res
+    doIt
+      $org: Org2.findById(@params.id)
+      docs: Doc2.find({ org: @params.id })
+      ppls: Ppl2.find({ org: @params.id })
+    , (res) => @send res
 
   @get '/findOrg/:name?': ->
     fnd = @params.name
-    that = @
-    Org
+    Org2
       .find({ name: new RegExp fnd, 'i' })
-      .exclude('docs', 'ppls')
       .sort('name', 'asc')
-      .limit(10)
-      .execFind (err, result) ->
-        that.send result
-
-  @get '/new': ->
-    # generate newId and redirect to new page
-    @redirect '#/org/123'
-
-  @get '/org/:id': ->
-    # Render start's page
-    @render 'org'
+      .limit(25)
+      .execFind (err, result) =>
+        @send result
 
   @view 'index': ->
     # comment
