@@ -8,21 +8,33 @@ require('zappa') ->
   Mongoose.connect 'mongodb://localhost/foo2'
 
   # Schemas
-  Doc2Schema = new Mongoose.Schema { touch: Date, org: Mongoose.Schema.ObjectId, author: Mongoose.Schema.ObjectId, txt: String, dat: Date }
-  Ppl2Schema = new Mongoose.Schema { touch: Date, org: Mongoose.Schema.ObjectId, name: String, post: String, tel: String }
-  Org2Schema = new Mongoose.Schema { touch: Date, name: String, addr: String }
 
-  Org2 = Mongoose.model 'org2', Org2Schema
-  Doc2 = Mongoose.model 'doc2', Doc2Schema
-  Ppl2 = Mongoose.model 'ppl2', Ppl2Schema
+  Org2 = Mongoose.model 'org2',
+    new Mongoose.Schema
+      touch: Date
+      name: String
+      addr: String
 
-  DocSchema = new Mongoose.Schema { author: String, date: String, txt: String, dat: Date }
-  PplSchema = new Mongoose.Schema { name: String, post: String, tel: String }
-  OrgSchema = new Mongoose.Schema { name: String, addr: String, ppls: [PplSchema], docs: [ DocSchema ] }
+  Ppl2 = Mongoose.model 'ppl2',
+    new Mongoose.Schema
+      touch: Date
+      org: Mongoose.Schema.ObjectId
+      name: String
+      post: String
+      tel: String
 
-  Org = Mongoose.model 'org', OrgSchema
-  Doc = Mongoose.model 'doc', DocSchema
-  Ppl = Mongoose.model 'doc', PplSchema
+  Doc2 = Mongoose.model 'doc2',
+    new Mongoose.Schema
+      touch: Date
+      org:
+        type: Mongoose.Schema.ObjectId
+        ref: 'doc2'
+      author:
+        type: Mongoose.Schema.ObjectId
+        ref: 'ppl2'
+      txt: String
+      dat: Date
+
 
   @get '/': ->
     @user = plan: 'staff'
@@ -48,9 +60,9 @@ require('zappa') ->
       ppl.empty()
 
     showDate = (d) ->
-      d = new Date(d) if d
-      d = new Date
-      mo = 'января февраля марта апреля мая июня июля августа сентября октября декабря'.split ' '
+      #console.log 'Parse DATE', d, new Date(d), new Date(d).getMonth()
+      d= if d then new Date(d) else new Date()
+      mo = 'января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split ' '
       da = 'воскресенье понедельник вторник среда четверг пятница суббота'.split ' '
       "#{da[d.getDay()]}, #{d.getDate()} #{mo[d.getMonth()]} #{d.getFullYear()} г."
 
@@ -97,8 +109,10 @@ require('zappa') ->
         "<p>#{params.txt.replace /\n/g, '<br/>'}</p>"
         "<small>"
         if params.dat then showDate(params.dat) else params.date
-        ", #{params.who}" if params.who
-        " [ #{params.tel} ]</small>" if params.tel
+        " ⇠ #{params.author.name}"
+        " ➙ #{params.who}" if params.who
+        " ⬅ #{params.tel}" if params.tel
+        "</small>"
       "</blockquote></div>"
     ].join ''
 
@@ -120,7 +134,7 @@ require('zappa') ->
         content.empty()
         console.log data.org.name
         content.append blockOrgHead data.org
-        data.docs.reverse().map (d) -> content.append blockOrgBody d
+        data.docs.map (d) -> content.append blockOrgBody d
         # map Ppl
         ppl.replaceWith '<ul>' + ((data.ppls.map (d) -> blockOrgPpl d, id).join '') + '</ul>'
         if data.ppls.length > 0 then show('.ppls') else hide('.ppls')
@@ -208,7 +222,7 @@ require('zappa') ->
               "<blockquote>"
                 "<p>#{txt}</p>"
                 "<small>"
-                  "#{showDate(d.doc.dat)}, Тарас Атаманкин, телефонный звонок: #{d.doc.who}, по телефону #{d.doc.tel}"
+                  "#{showDate(d.doc.dat)}, #{d.doc.author.name}, телефонный звонок: #{d.doc.who}, по телефону #{d.doc.tel}"
                 "</small>"
               "</blockquote>"
             "</div>"
@@ -271,6 +285,7 @@ require('zappa') ->
       .find()
       .desc('dat')
       .limit(25)
+      .populate('author')
       .execFind (err, result) =>
         cnt = result.length
         result.map (doc) =>
@@ -309,7 +324,7 @@ require('zappa') ->
   @get '/getOrgInfo/:id?': ->
     doIt
       $org: Org2.findById(@params.id)
-      docs: Doc2.find({ org: @params.id })
+      docs: Doc2.find({ org: @params.id }).sort('dat','desc').populate('author')
       ppls: Ppl2.find({ org: @params.id })
     , (res) => @send res
 
