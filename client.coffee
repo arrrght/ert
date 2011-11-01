@@ -1,7 +1,7 @@
 @include = ->
   @client '/index.js': ->
-    # find Org by name
     
+    # TODO get all redirects from sammy
     buttonsOn = (stage) ->
       st =
         root: 'no .ppls, no #btn-rm-org, no #btn-add-tel, no #btn-rm-ppl'
@@ -20,7 +20,7 @@
 
     showDate = (d) ->
       #console.log 'Parse DATE', d, new Date(d), new Date(d).getMonth()
-      d= if d then new Date(d) else new Date()
+      d = if d then new Date(d) else new Date()
       mo = 'января февраля марта апреля мая июня июля августа сентября октября ноября декабря'.split ' '
       da = 'воскресенье понедельник вторник среда четверг пятница суббота'.split ' '
       "#{da[d.getDay()]}, #{d.getDate()} #{mo[d.getMonth()]} #{d.getFullYear()} г."
@@ -92,7 +92,7 @@
         "<p>#{params.txt.replace /\n/g, '<br/>'}</p>"
         "<small>"
         if params.dat then showDate(params.dat) else params.date
-        " ⇽ #{params.author.name}"
+        " ⇽ #{params.author?.name}"
         " ⇿ #{params.who}" if params.who
         " ⇽ #{params.tel}" if params.tel
         "</small>"
@@ -108,7 +108,7 @@
       "</a></li>"
     ].join ''
 
-    ## getOrg with filllout
+    ## getOrg with fillout
     getAndFillOrg = (id, callback) ->
       content = $ '.content'
       ppl = $ '.ppls ul'
@@ -129,7 +129,6 @@
     hide = (prm...) -> prm.map (p) -> $(p).hide()
 
     # Routes (sammy)
-    # Org view
     @get '#/org/:id': (ctx) ->
       buttonsOn 'org'
       getAndFillOrg @params.id
@@ -166,6 +165,7 @@
       $.post '/newOrg', { name: $('#smart').val() }, (data) -> findOrg()
 
     @get '#/org/:id/newTel': (ctx) ->
+      # TODO remove that crap -> document.o
       unless document.o
         getAndFillOrg @params.id, -> ctx.redirect ctx.sammy_context.path + '?R' # redirect to self
         return false
@@ -211,11 +211,7 @@
               "</blockquote>"
             "</div>"
           ].join ''
-
-      console.log '***', @
       buttonsOn 'root'
-      $.get '/root', (data) ->
-        console.log 'ROOT', data
 
     $(document).ready ->
       $('.topbar').dropdown()
@@ -223,6 +219,8 @@
       #$('.container-fluid:first').append "<small class='date'>#{showDate()}</small>"
       findOrg()
 
+      # Buttons bind
+      # Новый телефонный разговор
       $('#btn-add-tel').click ->
         try id = document.location.hash.match('^#/org/(\\w+)$').pop()
         document.location = "/#/org/#{id}/newTel" if id
@@ -251,4 +249,3 @@
       $('#smart-clear').click (e) ->
         $('#smart').val ''
         findOrg()
-  # End-of-client
