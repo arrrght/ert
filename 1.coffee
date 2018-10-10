@@ -1,4 +1,5 @@
-require('zappa') ->
+require('zappajs').run 3333, ->
+  @set views: "#{__dirname}/views"
   @use 'bodyParser', 'methodOverride', @app.router, 'static'
   @use errorHandler: { dumpExceptions: on, showStack: on }
   @use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
@@ -7,6 +8,7 @@ require('zappa') ->
   # TODO Whay is so globally's?
   global.Mongoose = require 'mongoose'
   Mongoose.connect 'mongodb://localhost/foo2'
+  global._ = require 'underscore'
 
   # Client-side script with sammy, jquery and Twitter bootstrap css
   @include 'client'
@@ -17,13 +19,15 @@ require('zappa') ->
   # TODO login page
   #
  
+  # Get default Ppl (when holes in db)
+  DefPpl = {}
+  Ppl2.findById '4eaffc0436b57c880f048d13', (err,doc) =>
+    unless err then DefPpl = doc else console.log 'Can not find def Ppl'
+
   # Show root page
   @get '/': ->
     @user = plan: 'staff'
     @render 'index', { @user }
-
-  @view 'index': ->
-    # comment
 
   # Helper for parallel fetch
   # Return hash
@@ -41,11 +45,12 @@ require('zappa') ->
   # Show root page with last conversation
   @get '/root', ->
     ret = []
-    Doc2.find().desc('dat').limit(25).populate('author').execFind (err, result) =>
+    Doc2.find().sort({ dat: 'desc'}).limit(25).populate('author').execFind (err, result) =>
       # TODO change to populate?
       cnt = result.length
       result.map (doc) =>
         Org2.findById doc.org, (err, res) =>
+          doc.author = DefPpl unless doc.author
           ret.push { doc: doc , org: res }
           @send ret if --cnt == 0
 
@@ -90,16 +95,17 @@ require('zappa') ->
   @get '/getOrgInfo/:id?': ->
     doIt
       $org: Org2.findById(@params.id)
-      docs: Doc2.find({ org: @params.id }).sort('dat','desc').populate('author')
+      docs: Doc2.find({ org: @params.id }).sort({ 'dat':'desc' }).populate('author')
       ppls: Ppl2.find({ org: @params.id })
     , (res) => @send res
 
   # Find org by name
   @get '/findOrg/:name?': ->
     fnd = @params.name
+    console.log "FND: #{fnd}"
     Org2
       .find({ name: new RegExp fnd, 'i' })
-      .sort('name', 'asc')
+      .sort({ name:'asc' })
       .limit(25)
       .execFind (err, result) =>
         @send result

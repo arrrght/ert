@@ -1,3 +1,4 @@
+# Забираем из старой базы и переливаем в новую
 # Requires
 Mongoose = require 'mongoose'
 async = require 'async'
@@ -7,14 +8,16 @@ Iconv = require('iconv').Iconv
 ProgressBar = require 'progress'
 fb = require 'firebird' # FUCKED database
 
-# Init
+# Подключаемся к новой базе
 conn = Mongoose.connect 'mongodb://localhost/foo2'
 { Org2, Doc2, Ppl2 } = require './models'
 
+# Подключаемся к старой базе (firebird - отвратительная поделка криворуких дебилов)
 conn = fb.createConnection()
 conn.connectSync '10.96.0.162/3045/C:\\SKYAPM\\BIN\\BASE3.GDB', 'sysdba', 'fbclient.dll', ''
 cnv = new Iconv 'CP1251', 'UTF-8'
 
+# Параметры запуска скрипта
 prm
   .version('0.0.1')
   .option('-D, --clean-docs', 'Clean DOCs')
@@ -38,6 +41,7 @@ fb_getTxt = (o) -> # Fetch and convert from CP1251 to UTF8, remove all cr-lf to 
   o._closeSync()
   (cnv.convert buf.slice(0, len)).toString().replace(/\x0D\x0A/g, '\n').replace /\n$/, ''
 
+# Выполняем SQL запрос и возврящаем данные
 fb_fetchOne = (sql) ->
   try
     return conn.querySync(sql).fetchSync(1, true).shift()
@@ -45,11 +49,12 @@ fb_fetchOne = (sql) ->
     console.log '\nDIED', sql,'\n', e
     process.exit()
 
+# Берем из базу по одному(!) потому как база на firebird'е рушится каждый раз когда берешь по много. Отвратительная поделка
 fb_fetchUser = (id) ->
   console.log 'fb_fetchUser', id if prm.debug
   fb_fetchOne "select FIRST 1 NAME, ID, DOLZHN from WORKS where ID = #{id}"
 
-# FUCK FUCK FUCK FUCK
+# Приходится брать точно по записи, а не select *, потому как подучая
 fb_getOrgByEachField = (id) ->
   fields = 'NN2, FULLNAME, URL, INN, ZIP, STITLE, HOUSE, LITER, OFFICE, EXTEND, ACITY, AADDR, OBL, APHONE, ATCOD'.split ', '
   ret = {}
@@ -57,6 +62,7 @@ fb_getOrgByEachField = (id) ->
     ret[f] = (fb_fetchOne "select FIRST 1 #{f} from ENPRISE where NN2=#{id}")[f]
   ret
   
+# Так же по одгному забираем организации
 fb_getOrg = (id) ->
   console.log 'fb_org', id if prm.debug
   sql =  "select FIRST 1 * from ENPRISE where NN2 = #{id}"
@@ -65,7 +71,7 @@ fb_getOrg = (id) ->
   catch e
     fb_getOrgByEachField id
 
-# MY find or create user
+# Забираем из базы людей, обрабатываем и складываем в свою
 my_getUser = (sky_user_id, callback) ->
   console.log 'Proceed find MY USER', sky_user_id if prm.debug
   Ppl2.find({ sky_id: sky_user_id, org: ERTID }).limit(1).execFind (err, my_user) ->
@@ -79,7 +85,7 @@ my_getUser = (sky_user_id, callback) ->
         console.log 'My USER created', res.name if prm.debug
         callback res
       
-# MY find or create org
+# Забираем из базы организации и складываем в свою
 my_getOrg = (sky_org_id, callback) ->
   console.log 'Proceed find MY ORG', sky_org_id if prm.debug
   Org2.find({ sky_id: sky_org_id }).limit(1).execFind (err, my_org) ->
@@ -92,6 +98,7 @@ my_getOrg = (sky_org_id, callback) ->
       #sky_org = fb_getOrgByEachField sky_org_id
       console.log 'get SKY ORG', sky_org if prm.debug
 
+      # Собираем запись...
       org = new Org2
         name: sky_org.FULLNAME
         sky_id: sky_org.NN2
@@ -110,22 +117,27 @@ my_getOrg = (sky_org_id, callback) ->
         phone: sky_org.APHONE
         pCode: sky_org.ATCOD
 
+      # ... и складываем
       org.save (err, res) ->
         console.log 'MY ORG created', org.name if prm.debug
         callback res
 
 # FB doc + time -> doc.time
+# преобразуем дату время из кривой записи, преобразуем и отдаем нормальную
 fb_date = (dat, tim) ->
   [p_dat, p_tim] = [new Date(dat), new Date(tim)]
   d = new Date p_dat.getFullYear(), p_dat.getMonth(), p_dat.getDate()-1, p_tim.getHours()+1, p_tim.getMinutes(), p_tim.getSeconds()
 
+# Создаем документ каллбаком
 create_doc = (doc, callback) ->
   (new Doc2(doc)).save (err, res) ->
     callback res
 
+# Выдираем документы и складываем в свою бд
 my_getDoc = (sky_org_id, callback) -> Doc2.find({ sky_org_id: sky_org_id }).execFind (err,res) -> callback res
 
 
+# Преобразуем документы
 process_doc = (sky_doc, user, my_org, callback) ->
   txt = fb_getTxt sky_doc.TXT
   #console.log 'TXTALL\n', txt, '\nEND-OF-TXTALL'
@@ -144,6 +156,8 @@ process_doc = (sky_doc, user, my_org, callback) ->
       dtP[3] = '20'+dtP[3] if String(dtP[3]).length is 2
       dt = new Date dtP[3]*1, dtP[2]*1, dtP[1]*1+1, -19 # WTF? -19 hours?
       dt = fb_date(sky_doc.DATA2, sky_doc.TIME2) if dt > fb_date(sky_doc.DATA2, sky_doc.TIME2)
+      
+      # Запись документа
       doc =
         sky_id: sky_doc.ID
         sky_org_id: sky_doc.NN2
@@ -160,6 +174,7 @@ process_doc = (sky_doc, user, my_org, callback) ->
         doc.dbg = t
         doc.dbg2 = txt
 
+      # Складываем работнику, потом скопом все сделает
       jobs.push (cb) ->
         my_getDoc sky_doc.NN2, (fnd_docs) ->
           found = false
@@ -173,6 +188,7 @@ process_doc = (sky_doc, user, my_org, callback) ->
             cb()
     
 
+    # Складывает по одному в базу, оставляя время для других процессов
     async.series jobs, -> process.nextTick -> callback()
   else
     console.log 'not SPLIT' if prm.debug
@@ -191,7 +207,7 @@ process_doc = (sky_doc, user, my_org, callback) ->
       console.log 'MY DOC saved' if prm.debug
       callback()
 
-# MY find or create Ppl
+# Выборка людей
 my_getCreatePpl = (sky_ppl, my_org, callback) ->
   console.log 'Proceed find MY PPL', sky_ppl.ID if prm.debug
 
@@ -204,16 +220,19 @@ my_getCreatePpl = (sky_ppl, my_org, callback) ->
         console.log 'My PPL created', res.name if prm.debug
         callback res
 
+# Обрабатываем людей
 proceedPpl = (sky_ppl, callback) ->
   console.log 'Process SKY PPLS', sky_ppl.ID if prm.debug
   my_getOrg sky_ppl.NN2, (org) ->
     my_getCreatePpl sky_ppl, org, ->
       callback()
 
+# Обрабатываем организации
 proceedOrg = (sky_org, callback) ->
   console.log 'Proceed SKY ORG', sky_org.ID if prm.debug
   my_getOrg sky_org.NN2, -> process.nextTick -> callback()
 
+# Обрабатываем документы
 proceedDoc = (sky_doc, callback) ->
   console.log 'Proceed SKY DOC', sky_doc.ID if prm.debug
   my_getOrg sky_doc.NN2, (my_org) ->
@@ -221,13 +240,14 @@ proceedDoc = (sky_doc, callback) ->
     my_getUser sky_doc.MANAGER, (user) ->
       process_doc sky_doc, user, my_org, -> process.nextTick -> callback()
 
+# Находим начало, конец и следующую запись из таблицы, чтобы выбирать по одному
 fucked_fb_cycle = (sql_table, id, fields, fun, callback) ->
   console.log "select count(*), max(#{id}), min(#{id}) from #{sql_table}" if prm.debug
   now = conn.querySync("select count(*), max(#{id}), min(#{id}) from #{sql_table}").fetchSync(1, true).shift()
   nowID = now.MIN - 1
   console.log 'now', now if prm.debug
-  #nowID = now.MAX - 5
   
+  # Показываем процесс
   bar = new ProgressBar 'parsing [:bar] :percent :etas', { total: now.COUNT, incomplete: ' ', complete: '.',  width: 80 } unless prm.debug
 
   getNext = -> process.nextTick ->
@@ -252,7 +272,7 @@ exitAtLast = ->
   Mongoose.disconnect()
   process.exit()
 
-# HERE START
+# Работы по параметрам из командной строки
 jobs = [
   (cb) ->
     if prm.cleanOrgs or prm.clean
@@ -268,6 +288,7 @@ jobs = [
     else cb()
 ]
 
+# Меняем структуру копии старой БД потому как эта тварь при конвертации из 1251 в UTF может увеличится до двух раз и падает, tckb нет места
 if prm.changeStructure
   console.log 'change structure'
   # change all varchar fields to 250 length. as a said - FUCKFUCKCUFKCUXKCUFKC UFCK
@@ -290,6 +311,7 @@ if prm.changeStructure
     ret = conn.querySync "ALTER TABLE #{a.RDB$RELATION_NAME} ALTER COLUMN #{a.RDB$FIELD_NAME} TYPE VARCHAR(199)"
     ret = conn.querySync "COMMIT"
 
+# Параллельно чистим базу
 async.parallel jobs, (err, res) ->
   Org2Schema = new Mongoose.Schema { touch: Date, name: String, addr: String, sky_id: Number }
   (new Org2({ name: 'ERT' })).save (err, res) ->
@@ -313,4 +335,5 @@ async.parallel jobs, (err, res) ->
         else cb()
     ]
 
+    # Но здесь последовательно, чтобы не рухнула старая бд
     async.series jobs, (err, res) -> exitAtLast()
