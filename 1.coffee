@@ -4,7 +4,6 @@ require('zappa') ->
   Mongoose.connect 'mongodb://localhost/foo2'
 
   @use 'bodyParser', 'methodOverride', @app.router
-  @enable 'minify'
   @use errorHandler: { dumpExceptions: on, showStack: on }
   @use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
   @use @express.compiler({ src: "#{__dirname}/public", enable: ['coffeescript'], minify: yes }), 'static'
@@ -15,11 +14,11 @@ require('zappa') ->
   Ext.evalFile 'model/Org'
 
   Ext.endpoint 'Org.rm', (r) ->
-    return failure { message: 'Can\'t get a ID '} unless r.data.id
+    return failure { message: 'Can\'t get a ID' } unless r.data.id
     Ext.Org.findById r.data.id, (err, res) ->
-      return failure { message: 'Can\'t find that'} if err or not res
+      return failure { message: 'Can\'t find that' } if err or not res
       res.remove (err) ->
-        if err then r.failure err else r.success { message: 'OK' }
+        if err then r.failure err else r.success 'OK'
 
   Ext.endpoint 'Org.find', (r) ->
       #txt = 'ГОК'
@@ -35,7 +34,7 @@ require('zappa') ->
     return r.failure 'Can\'t find ID in your params' unless r.data.id
     Ext.Org.findById r.data.id, (err, doc) ->
       if err or !doc
-        r.failure { message: 'Can\'t find that.' }
+        r.failure 'Can\'t find that.'
       else
         console.log doc
         r.success { docs: doc.docs }
@@ -45,7 +44,7 @@ require('zappa') ->
     doc = new Ext.Doc { date: new Date, txt: r.data.txt }
     Ext.Org.findById r.data.id, (err, res) ->
       if err or !res
-        r.failure { message: 'Can\'t find that.' }
+        r.failure 'Can\'t find that.'
       else
         res.docs.push doc
         res.save (err) ->

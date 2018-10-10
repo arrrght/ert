@@ -49,7 +49,7 @@ exports.evalFile = (fileName) ->
   file = fs.readFileSync "#{__dirname}/public/app/#{fileName}.coffee", 'utf8'
   coffee.eval file, { sandbox: { Ext: @ }}
 
-# Regiser endpoint function
+# Register endpoint function
 # prm like { formHandler : yes, len: 999 }
 # prm may skipped
 exports.endpoint = (name, prm, fun) ->
