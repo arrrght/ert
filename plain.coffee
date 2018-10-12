@@ -1,9 +1,9 @@
 require('zappajs').run 3333, ->
   @set views: "#{__dirname}/views"
-  @use 'bodyParser', 'methodOverride', @app.router, 'static'
-  @use errorHandler: { dumpExceptions: on, showStack: on }
-  @use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
-  @enable 'serve sammy', 'minify', 'serve jquery'
+  # @use 'bodyParser', 'methodOverride', @app.router, 'static'
+  #@use errorHandler: { dumpExceptions: on, showStack: on }
+  #@use @express.logger({ format: '\x1b[32m:method\x1b[0m \x1b[33m:url\x1b[0m :response-time ms' })
+  #@enable 'serve sammy', 'minify', 'serve jquery'
 
   # TODO Whay is so globally's?
   global.Mongoose = require 'mongoose'
